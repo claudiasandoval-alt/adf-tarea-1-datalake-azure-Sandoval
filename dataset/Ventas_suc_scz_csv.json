@@ -1,5 +1,5 @@
 {
-	"name": "Ventas_suc_scz",
+	"name": "Ventas_suc_scz_csv",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "datalake_ventas",
