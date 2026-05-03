@@ -1,0 +1,75 @@
+{
+	"name": "df_ventas_lp_bronze_silver",
+	"properties": {
+		"folder": {
+			"name": "Bronze"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Ventas_lpz_csv",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ID_Venta as string,",
+				"          Fecha_Venta as string,",
+				"          Producto as string,",
+				"          Cant as string,",
+				"          PrecioUnit as string,",
+				"          Sucursal as string,",
+				"          Vendedor as string,",
+				"          NombreCliente as string,",
+				"          EmailCliente as string,",
+				"          MetodoPago as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source1 select(mapColumn(",
+				"          id_venta = ID_Venta,",
+				"          fecha = Fecha_Venta,",
+				"          producto = Producto,",
+				"          cantidad = Cant,",
+				"          precio_unitario = PrecioUnit,",
+				"          sucursal = Sucursal,",
+				"          vendedor = Vendedor,",
+				"          nombre_cliente = NombreCliente,",
+				"          email_cliente = EmailCliente,",
+				"          metodo_pago = MetodoPago",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(id_venta = trim(id_venta),",
+				"          fecha = trim(fecha),",
+				"          producto = trim(producto),",
+				"          cantidad = trim(cantidad),",
+				"          precio_unitario = trim(precio_unitario),",
+				"          sucursal = trim(sucursal),",
+				"          vendedor = trim(vendedor),",
+				"          nombre_cliente = trim(nombre_cliente),",
+				"          email_cliente = trim(email_cliente),",
+				"          metodo_pago = trim(metodo_pago)) ~> derivedColumn1",
+				"derivedColumn1 derive(sucursal = iif(in(['LPZ', 'La Paz', 'la paz', 'LA PAZ', 'lapaz', 'LaPaz', 'LP', 'L.P.', 'L. Paz', 'La-Paz'], sucursal), 'La Paz', sucursal),",
+				"          canal = 'Sucursal') ~> derivedColumn2"
+			]
+		}
+	}
+}
