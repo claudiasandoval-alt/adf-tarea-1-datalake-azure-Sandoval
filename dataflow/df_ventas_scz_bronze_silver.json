@@ -43,7 +43,7 @@
 				"source1 derive(vendedor = trim(vendedor),",
 				"          cliente_nombre = trim(cliente_nombre),",
 				"          producto = trim(producto)) ~> derivedColumn1",
-				"derivedColumn1 derive() ~> derivedColumn2"
+				"derivedColumn1 derive(producto = initCap(regexReplace(producto, '\\\\s+', ' '))) ~> derivedColumn2"
 			]
 		}
 	}
