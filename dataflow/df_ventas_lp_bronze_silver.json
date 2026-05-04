@@ -25,6 +25,18 @@
 				},
 				{
 					"name": "derivedColumn2"
+				},
+				{
+					"name": "derivedColumn3"
+				},
+				{
+					"name": "derivedColumn4"
+				},
+				{
+					"name": "derivedColumn5"
+				},
+				{
+					"name": "filter1"
 				}
 			],
 			"scriptLines": [
@@ -68,7 +80,23 @@
 				"          email_cliente = trim(email_cliente),",
 				"          metodo_pago = trim(metodo_pago)) ~> derivedColumn1",
 				"derivedColumn1 derive(sucursal = iif(in(['LPZ', 'La Paz', 'la paz', 'LA PAZ', 'lapaz', 'LaPaz', 'LP', 'L.P.', 'L. Paz', 'La-Paz'], sucursal), 'La Paz', sucursal),",
-				"          canal = 'Sucursal') ~> derivedColumn2"
+				"          canal = 'Sucursal') ~> derivedColumn2",
+				"derivedColumn2 derive(fecha = coalesce(\r",
+				"    toDate(fecha, 'yyyy-MM-dd'),\r",
+				"    toDate(fecha, 'dd/MM/yyyy'),\r",
+				"    toDate(fecha, 'yyyy/MM/dd'),\r",
+				"    toDate(fecha, 'MM-dd-yyyy'),\r",
+				"    toDate(fecha, 'dd-MM-yyyy'),\r",
+				"    toDate(fecha, 'dd-MMM-yyyy'),\r",
+				"    toDate(fecha, 'd/M/yyyy'),\r",
+				"    toDate(fecha, 'MMMM dd, yyyy'),\r",
+				"    toDate(fecha, 'MMM dd, yyyy'),\r",
+				"    toDate(replace(fecha, ' de ', ' '), 'dd MMMM yyyy')\r",
+				")) ~> derivedColumn3",
+				"derivedColumn3 derive(cantidad = toInteger(cantidad),",
+				"          precio_unitario = toFloat(regexReplace(toString(precio_unitario), '[^0-9.]', ''))) ~> derivedColumn4",
+				"derivedColumn4 derive(producto = initCap(trim(replace(producto, '\"', '')))) ~> derivedColumn5",
+				"derivedColumn5 filter(!isNull(cantidad) && cantidad > 0 && !isNull(precio_unitario) && !isNull(fecha)) ~> filter1"
 			]
 		}
 	}
