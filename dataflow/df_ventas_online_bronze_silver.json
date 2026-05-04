@@ -1,0 +1,119 @@
+{
+	"name": "df_ventas_online_bronze_silver",
+	"properties": {
+		"folder": {
+			"name": "Bronze"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ventas_online_csv",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ventas_scz_limpio_csv",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "derivedColumn3"
+				},
+				{
+					"name": "derivedColumn4"
+				},
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "derivedColumn5"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          order_id as string,",
+				"          timestamp as string,",
+				"          product as string,",
+				"          qty as string,",
+				"          unit_price as string,",
+				"          {customer/name} as string,",
+				"          {customer/email} as string,",
+				"          {customer/city} as string,",
+				"          payment_method as string,",
+				"          status as string,",
+				"          shipping_cost as string,",
+				"          channel as string,",
+				"          customer as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source1 select(mapColumn(",
+				"          id_venta = order_id,",
+				"          fecha = timestamp,",
+				"          producto = product,",
+				"          cantidad = qty,",
+				"          precio_unitario = unit_price,",
+				"          nombre_cliente = {customer/name},",
+				"          email_cliente = {customer/email},",
+				"          ciudad = {customer/city},",
+				"          metodo_pago = payment_method,",
+				"          estado = status,",
+				"          costo_envio = shipping_cost,",
+				"          canal = channel,",
+				"          cliente = customer",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(id_venta = trim(id_venta),",
+				"          fecha = trim(fecha),",
+				"          producto = trim(producto),",
+				"          cantidad = trim(cantidad),",
+				"          precio_unitario = trim(precio_unitario),",
+				"          nombre_cliente = trim(nombre_cliente),",
+				"          email_cliente = trim(email_cliente),",
+				"          ciudad = trim(ciudad),",
+				"          metodo_pago = trim(metodo_pago),",
+				"          estado = trim(estado),",
+				"          costo_envio = trim(costo_envio),",
+				"          canal = trim(canal),",
+				"          cliente = trim(cliente)) ~> derivedColumn1",
+				"derivedColumn1 derive(precio_unitario = toFloat(regexReplace(toString(precio_unitario), '[^0-9.]', '')),",
+				"          costo_envio = toFloat(regexReplace(toString(costo_envio), '[^0-9.]', ''))) ~> derivedColumn2",
+				"derivedColumn2 derive(cantidad = toInteger(cantidad),",
+				"          producto = initCap(trim(replace(producto, '\"', '')))) ~> derivedColumn3",
+				"derivedColumn3 derive(fecha = coalesce(     toDate(fecha, 'yyyy-MM-dd'),     toDate(fecha, 'yyyy/MM/dd'),     toDate(fecha, 'dd/MM/yyyy'),     toDate(fecha, 'MM-dd-yyyy'),     toDate(fecha, 'dd-MMM-yyyy'),     toDate(fecha, 'MMMM dd, yyyy'),     toDate(fecha, 'MMM dd, yyyy'),     toDate(replace(fecha, ' de ', ' '), 'dd MMMM yyyy') )) ~> derivedColumn4",
+				"derivedColumn4 filter(!isNull(cantidad) && cantidad > 0 && !isNull(precio_unitario) && !isNull(fecha),",
+				"     partitionBy('hash', 1)) ~> filter1",
+				"filter1 derive(canal = 'en línea') ~> derivedColumn5",
+				"derivedColumn5 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['ventas_online_limpio.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> sink1"
+			]
+		}
+	}
+}
